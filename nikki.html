@@ -1,0 +1,2255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SpeakFlow Pronunciation Analyzer</title>
+
+  <style>
+    :root {
+      --primary: #0f766e;
+      --primary-dark: #115e59;
+      --bg: #f4f8f8;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #6b7280;
+      --border: #dfe8e7;
+      --success: #15803d;
+      --danger: #dc2626;
+      --warning: #b45309;
+      --info: #0369a1;
+      --shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+    }
+
+    body.dark {
+      --bg: #0f172a;
+      --card: #172033;
+      --text: #f1f5f9;
+      --muted: #aab5c5;
+      --border: #2d3a50;
+      --shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--bg);
+      font-family: Arial, Helvetica, sans-serif;
+      transition: background 0.25s, color 0.25s;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .auth-wrapper {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background:
+        radial-gradient(circle at top right, rgba(15, 118, 110, 0.25), transparent 35%),
+        var(--bg);
+    }
+
+    .auth-card {
+      width: min(440px, 100%);
+      padding: 30px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      color: var(--primary);
+      font-size: 25px;
+      font-weight: 800;
+    }
+
+    .auth-card h1 {
+      margin: 12px 0 8px;
+      font-size: 29px;
+    }
+
+    .auth-card p {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .demo-box {
+      margin: 20px 0;
+      padding: 13px;
+      background: rgba(15, 118, 110, 0.09);
+      border: 1px solid rgba(15, 118, 110, 0.25);
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px 13px;
+      color: var(--text);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 170px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.13);
+    }
+
+    .btn {
+      padding: 11px 16px;
+      border-radius: 10px;
+      font-weight: 700;
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      transform: none;
+    }
+
+    .btn-primary {
+      color: white;
+      background: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      color: #273449;
+      background: #e8edf5;
+    }
+
+    body.dark .btn-secondary {
+      color: #e5e7eb;
+      background: #29364d;
+    }
+
+    .btn-danger {
+      color: white;
+      background: var(--danger);
+    }
+
+    .btn-success {
+      color: white;
+      background: var(--success);
+    }
+
+    .btn-warning {
+      color: white;
+      background: #d97706;
+    }
+
+    .message {
+      min-height: 22px;
+      margin-top: 12px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .success {
+      color: var(--success);
+    }
+
+    .error {
+      color: var(--danger);
+    }
+
+    .app-shell {
+      min-height: 100vh;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      min-height: 72px;
+      padding: 14px 28px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar-left,
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+    }
+
+    .topbar-title {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .user-badge {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: calc(100vh - 72px);
+    }
+
+    .sidebar {
+      padding: 24px 15px;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+    }
+
+    .nav-btn {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 13px 15px;
+      color: var(--muted);
+      text-align: left;
+      background: transparent;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+
+    .nav-btn:hover,
+    .nav-btn.active {
+      color: var(--primary);
+      background: rgba(15, 118, 110, 0.12);
+    }
+
+    .content {
+      width: 100%;
+      max-width: 1500px;
+      margin: auto;
+      padding: 28px;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .page-header h1 {
+      margin-bottom: 7px;
+      font-size: 30px;
+    }
+
+    .page-header p {
+      color: var(--muted);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card,
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-card {
+      padding: 19px;
+    }
+
+    .stat-label {
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .stat-value {
+      font-size: 30px;
+      font-weight: 800;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(350px, 0.85fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .card {
+      margin-bottom: 20px;
+      padding: 22px;
+    }
+
+    .card h2 {
+      margin-bottom: 7px;
+      font-size: 20px;
+    }
+
+    .card-subtitle {
+      margin-bottom: 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .record-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .record-dot {
+      width: 10px;
+      height: 10px;
+      background: #94a3b8;
+      border-radius: 50%;
+    }
+
+    .record-dot.active {
+      background: var(--danger);
+      animation: pulse 1.1s infinite;
+    }
+
+    @keyframes pulse {
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    .result-box {
+      min-height: 190px;
+      padding: 16px;
+      background: rgba(127, 127, 127, 0.04);
+      border: 1px dashed var(--border);
+      border-radius: 13px;
+    }
+
+    .empty-state {
+      padding: 60px 15px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .result-item {
+      padding: 13px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .result-item small {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+    }
+
+    .result-item strong {
+      font-size: 17px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .badge-success {
+      color: #166534;
+      background: #dcfce7;
+    }
+
+    .badge-danger {
+      color: #991b1b;
+      background: #fee2e2;
+    }
+
+    .badge-warning {
+      color: #92400e;
+      background: #fef3c7;
+    }
+
+    .badge-info {
+      color: #1d4ed8;
+      background: #dbeafe;
+    }
+
+    .badge-score {
+      color: #155e75;
+      background: #cffafe;
+    }
+
+    body.dark .badge-success {
+      color: #bbf7d0;
+      background: #14532d;
+    }
+
+    body.dark .badge-danger {
+      color: #fecaca;
+      background: #7f1d1d;
+    }
+
+    body.dark .badge-warning {
+      color: #fde68a;
+      background: #78350f;
+    }
+
+    body.dark .badge-info {
+      color: #bfdbfe;
+      background: #1e3a8a;
+    }
+
+    body.dark .badge-score {
+      color: #a5f3fc;
+      background: #164e63;
+    }
+
+    .score-label {
+      display: flex;
+      justify-content: space-between;
+      margin: 15px 0 7px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .score-bar {
+      height: 15px;
+      overflow: hidden;
+      background: var(--border);
+      border-radius: 999px;
+    }
+
+    .score-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #f59e0b, #16a34a);
+      border-radius: inherit;
+      transition: width 0.4s;
+    }
+
+    .word-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+      gap: 10px;
+    }
+
+    .practice-word {
+      padding: 13px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .practice-word strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 17px;
+    }
+
+    .practice-word small {
+      color: var(--muted);
+    }
+
+    .history-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .history-item {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .history-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .history-title {
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .history-text {
+      margin-bottom: 10px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .history-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .footer-note {
+      margin-top: 15px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    @media (max-width: 1050px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 15px;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 12px;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .nav-btn {
+        width: auto;
+        margin: 0;
+        white-space: nowrap;
+      }
+
+      .content {
+        padding: 18px 14px;
+      }
+
+      .page-header {
+        flex-direction: column;
+      }
+
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 470px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .result-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- LOGIN -->
+  <section id="loginPage" class="auth-wrapper">
+    <div class="auth-card">
+      <div class="brand">SpeakFlow</div>
+
+      <h1>Pronunciation Analyzer</h1>
+
+      <p>
+        Practice a sentence, compare your spoken transcript, and improve your
+        fluency using NLP-based analysis.
+      </p>
+
+      <div class="demo-box">
+        <strong>Demo login</strong><br />
+        Email: demo@fluency.com<br />
+        Password: Fluency@123
+      </div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="loginEmail">Email address</label>
+          <input
+            id="loginEmail"
+            type="email"
+            placeholder="Enter your email"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input
+            id="loginPassword"
+            type="password"
+            placeholder="Enter your password"
+            required
+          />
+        </div>
+
+        <button class="btn btn-primary" type="submit" style="width: 100%;">
+          Login
+        </button>
+
+        <div id="loginMessage" class="message"></div>
+      </form>
+
+      <div class="footer-note">
+        Educational browser-only prototype.
+      </div>
+    </div>
+  </section>
+
+  <!-- APPLICATION -->
+  <section id="appPage" class="app-shell hidden">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="brand">SpeakFlow</div>
+        <div class="topbar-title">Pronunciation and Fluency Analyzer</div>
+      </div>
+
+      <div class="topbar-right">
+        <span id="userBadge" class="user-badge"></span>
+        <button id="themeBtn" class="btn btn-secondary">🌙 Dark</button>
+        <button id="logoutBtn" class="btn btn-danger">Logout</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <button class="nav-btn active" data-section="dashboardSection">
+          📊 Dashboard
+        </button>
+
+        <button class="nav-btn" data-section="practiceSection">
+          🎙 Practice
+        </button>
+
+        <button class="nav-btn" data-section="historySection">
+          📝 History
+        </button>
+
+        <button class="nav-btn" data-section="profileSection">
+          👤 Profile
+        </button>
+      </aside>
+
+      <main class="content">
+        <!-- DASHBOARD -->
+        <section id="dashboardSection" class="app-section">
+          <div class="page-header">
+            <div>
+              <h1>Fluency Dashboard</h1>
+              <p>Track your speaking practice and pronunciation progress.</p>
+            </div>
+
+            <button id="newPracticeBtn" class="btn btn-primary">
+              Start Practice
+            </button>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">PRACTICE SESSIONS</div>
+              <div id="sessionCount" class="stat-value">0</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-label">AVERAGE ACCURACY</div>
+              <div id="averageAccuracy" class="stat-value" style="color: var(--primary);">
+                0%
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-label">AVERAGE FLUENCY</div>
+              <div id="averageFluency" class="stat-value" style="color: var(--success);">
+                0%
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-label">WORDS PRACTICED</div>
+              <div id="wordsPracticed" class="stat-value" style="color: var(--warning);">
+                0
+              </div>
+            </div>
+          </div>
+
+          <div class="main-grid">
+            <div class="card">
+              <h2>Progress overview</h2>
+              <p class="card-subtitle">
+                Average scores from your practice sessions.
+              </p>
+
+              <div class="score-label">
+                <span>Word accuracy</span>
+                <strong id="dashboardAccuracyText">0%</strong>
+              </div>
+
+              <div class="score-bar">
+                <div id="dashboardAccuracyBar" class="score-fill" style="width: 0%;"></div>
+              </div>
+
+              <div class="score-label">
+                <span>Fluency</span>
+                <strong id="dashboardFluencyText">0%</strong>
+              </div>
+
+              <div class="score-bar">
+                <div id="dashboardFluencyBar" class="score-fill" style="width: 0%;"></div>
+              </div>
+
+              <div class="score-label">
+                <span>Pronunciation estimate</span>
+                <strong id="dashboardPronunciationText">0%</strong>
+              </div>
+
+              <div class="score-bar">
+                <div id="dashboardPronunciationBar" class="score-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h2>Latest practice</h2>
+              <p class="card-subtitle">
+                Your latest speaking analysis.
+              </p>
+
+              <div id="latestPractice">
+                <div class="empty-state">No practice session found.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PRACTICE -->
+        <section id="practiceSection" class="app-section hidden">
+          <div class="page-header">
+            <div>
+              <h1>Speaking Practice</h1>
+              <p>
+                Read the reference sentence aloud or use your own sentence.
+              </p>
+            </div>
+          </div>
+
+          <div class="main-grid">
+            <div class="card">
+              <h2>Practice input</h2>
+              <p class="card-subtitle">
+                The application compares the reference sentence with the speech
+                transcript returned by the browser.
+              </p>
+
+              <div class="form-group">
+                <label for="practiceLanguage">Speech language</label>
+                <select id="practiceLanguage">
+                  <option value="en-IN">English - India</option>
+                  <option value="en-US">English - United States</option>
+                  <option value="ta-IN">Tamil - India</option>
+                  <option value="hi-IN">Hindi - India</option>
+                  <option value="te-IN">Telugu - India</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="referenceText">Reference sentence</label>
+                <textarea
+                  id="referenceText"
+                  style="min-height: 100px;"
+                  placeholder="Example: Natural language processing helps computers understand human language."
+                ></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="spokenText">Spoken transcript</label>
+                <textarea
+                  id="spokenText"
+                  placeholder="Click Start Speaking and read the reference sentence..."
+                ></textarea>
+              </div>
+
+              <div class="button-row">
+                <button id="startSpeechBtn" class="btn btn-primary">
+                  🎙 Start Speaking
+                </button>
+
+                <button id="stopSpeechBtn" class="btn btn-danger" disabled>
+                  ⏹ Stop
+                </button>
+
+                <button id="clearBtn" class="btn btn-secondary">
+                  Clear
+                </button>
+
+                <button id="sampleBtn" class="btn btn-secondary">
+                  Use Sample
+                </button>
+              </div>
+
+              <div class="record-status">
+                <span id="recordDot" class="record-dot"></span>
+                <span id="recordStatus">Microphone is ready.</span>
+              </div>
+
+              <div class="button-row">
+                <button id="analyzeBtn" class="btn btn-success">
+                  Analyze Speech
+                </button>
+
+                <button id="speakReferenceBtn" class="btn btn-secondary">
+                  🔊 Hear Reference
+                </button>
+              </div>
+
+              <div id="practiceMessage" class="message"></div>
+            </div>
+
+            <div class="card">
+              <h2>Analysis result</h2>
+              <p class="card-subtitle">
+                NLP and fluency analysis of the spoken transcript.
+              </p>
+
+              <div id="analysisResult" class="result-box">
+                <div class="empty-state">
+                  Accuracy, fluency, filler words, and pronunciation practice
+                  words will appear here.
+                </div>
+              </div>
+
+              <div class="button-row">
+                <button id="readTranscriptBtn" class="btn btn-secondary" disabled>
+                  🔊 Read Transcript
+                </button>
+
+                <button id="copyTranscriptBtn" class="btn btn-secondary" disabled>
+                  📋 Copy Transcript
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="main-grid">
+            <div class="card">
+              <h2>Word comparison</h2>
+              <p class="card-subtitle">
+                Words matched and missing compared with the reference sentence.
+              </p>
+
+              <div id="wordComparison" class="result-box">
+                <div class="empty-state">
+                  Word comparison will appear here.
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h2>Pronunciation practice</h2>
+              <p class="card-subtitle">
+                Practice difficult or unmatched words.
+              </p>
+
+              <div id="practiceWords" class="word-grid">
+                <div class="empty-state">
+                  Practice words will appear here.
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- HISTORY -->
+        <section id="historySection" class="app-section hidden">
+          <div class="page-header">
+            <div>
+              <h1>Practice History</h1>
+              <p>Review previous pronunciation and fluency sessions.</p>
+            </div>
+
+            <button id="exportBtn" class="btn btn-primary">
+              Export CSV
+            </button>
+          </div>
+
+          <div class="card">
+            <button id="clearHistoryBtn" class="btn btn-danger">
+              Clear History
+            </button>
+
+            <div id="historyList" class="history-list" style="margin-top: 18px;"></div>
+          </div>
+        </section>
+
+        <!-- PROFILE -->
+        <section id="profileSection" class="app-section hidden">
+          <div class="page-header">
+            <div>
+              <h1>Profile and Security</h1>
+              <p>Update your profile and change your demo password.</p>
+            </div>
+          </div>
+
+          <div class="main-grid">
+            <div class="card">
+              <h2>Profile information</h2>
+              <p class="card-subtitle">
+                These values are stored only in this browser.
+              </p>
+
+              <div class="profile-grid">
+                <div class="form-group">
+                  <label for="profileName">Name</label>
+                  <input id="profileName" type="text" />
+                </div>
+
+                <div class="form-group">
+                  <label for="profileEmail">Email</label>
+                  <input id="profileEmail" type="email" readonly />
+                </div>
+              </div>
+
+              <button id="saveProfileBtn" class="btn btn-primary">
+                Save Profile
+              </button>
+
+              <div id="profileMessage" class="message"></div>
+            </div>
+
+            <div class="card">
+              <h2>Change password</h2>
+              <p class="card-subtitle">
+                Use at least six characters.
+              </p>
+
+              <form id="passwordForm">
+                <div class="form-group">
+                  <label for="currentPassword">Current password</label>
+                  <input id="currentPassword" type="password" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="newPassword">New password</label>
+                  <input id="newPassword" type="password" minlength="6" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="confirmPassword">Confirm new password</label>
+                  <input id="confirmPassword" type="password" minlength="6" required />
+                </div>
+
+                <button class="btn btn-warning" type="submit">
+                  Change Password
+                </button>
+
+                <div id="passwordMessage" class="message"></div>
+              </form>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Security and accuracy note</h2>
+            <p class="note">
+              This browser demo analyzes the transcript produced by the speech
+              recognition service. It does not measure real phoneme-level
+              pronunciation accuracy. For production pronunciation assessment,
+              use phoneme alignment, acoustic analysis, or a speech model such
+              as Wav2Vec2.
+            </p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </section>
+
+  <script>
+    "use strict";
+
+    const KEYS = {
+      user: "fluency_analyzer_user_v1",
+      session: "fluency_analyzer_session_v1",
+      theme: "fluency_analyzer_theme_v1",
+      history: "fluency_analyzer_history_v1"
+    };
+
+    const DEFAULT_USER = {
+      name: "Demo Learner",
+      email: "demo@fluency.com",
+      password: "Fluency@123"
+    };
+
+    const STOPWORDS = new Set([
+      "the", "a", "an", "is", "are", "was", "were", "be", "been",
+      "to", "of", "in", "on", "for", "with", "and", "or", "but",
+      "this", "that", "these", "those", "it", "as", "at", "by",
+      "from", "we", "they", "you", "i", "our", "your", "their",
+      "have", "has", "had", "will", "would", "can", "could",
+      "very", "more", "than", "then", "into", "my", "me"
+    ]);
+
+    const FILLER_WORDS = [
+      "um",
+      "uh",
+      "like",
+      "actually",
+      "basically",
+      "you know",
+      "i mean",
+      "sort of",
+      "kind of",
+      "okay"
+    ];
+
+    const PRONUNCIATION_TIPS = {
+      natural: "Say the first syllable clearly: NAT-u-ral.",
+      language: "Break it into LANG-uage and keep the middle sound light.",
+      processing: "Practice as PRO-cess-ing.",
+      computer: "Stress the second syllable: com-PU-ter.",
+      communication: "Practice slowly: com-mu-ni-CA-tion.",
+      development: "Break it into de-VEL-op-ment.",
+      pronunciation: "Practice as pro-nun-ci-A-tion.",
+      comfortable: "Use a relaxed middle sound: COMF-ter-ble.",
+      technology: "Stress the second syllable: tech-NOL-o-gy.",
+      analysis: "Practice as a-NA-ly-sis.",
+      application: "Break it into ap-pli-CA-tion.",
+      environment: "Practice en-VI-ron-ment.",
+      renewable: "Stress the second syllable: re-NEW-a-ble.",
+      education: "Practice ed-u-CA-tion.",
+      opportunity: "Break it into op-por-TU-ni-ty."
+    };
+
+    let currentUser = null;
+    let recognition = null;
+    let recognizing = false;
+    let currentAnalysis = null;
+    let speechStartTime = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function readJSON(key, fallback) {
+      try {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function writeJSON(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function getUser() {
+      const user = readJSON(KEYS.user, null);
+
+      if (!user) {
+        writeJSON(KEYS.user, DEFAULT_USER);
+        return { ...DEFAULT_USER };
+      }
+
+      return user;
+    }
+
+    function getHistory() {
+      return readJSON(KEYS.history, []);
+    }
+
+    function setHistory(history) {
+      writeJSON(KEYS.history, history);
+    }
+
+    function showMessage(id, text, type) {
+      const element = $(id);
+      element.textContent = text;
+      element.className = `message ${type}`;
+    }
+
+    function clearMessage(id) {
+      $(id).textContent = "";
+      $(id).className = "message";
+    }
+
+    function escapeHTML(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function formatDate(date) {
+      return new Date(date).toLocaleString();
+    }
+
+    function applyTheme() {
+      const theme = localStorage.getItem(KEYS.theme) || "light";
+      document.body.classList.toggle("dark", theme === "dark");
+      $("themeBtn").textContent =
+        theme === "dark" ? "☀️ Light" : "🌙 Dark";
+    }
+
+    function toggleTheme() {
+      const dark = document.body.classList.contains("dark");
+      localStorage.setItem(KEYS.theme, dark ? "light" : "dark");
+      applyTheme();
+    }
+
+    function showLogin() {
+      $("loginPage").classList.remove("hidden");
+      $("appPage").classList.add("hidden");
+    }
+
+    function showApp() {
+      $("loginPage").classList.add("hidden");
+      $("appPage").classList.remove("hidden");
+
+      currentUser = getUser();
+
+      $("userBadge").textContent =
+        `${currentUser.name} • ${currentUser.email}`;
+
+      loadProfile();
+      updateDashboard();
+      renderHistory();
+      applyTheme();
+    }
+
+    function login(email, password) {
+      const user = getUser();
+
+      if (
+        email.trim().toLowerCase() === user.email.toLowerCase() &&
+        password === user.password
+      ) {
+        currentUser = user;
+        localStorage.setItem(KEYS.session, user.email);
+        showApp();
+        return true;
+      }
+
+      return false;
+    }
+
+    function logout() {
+      localStorage.removeItem(KEYS.session);
+      currentUser = null;
+      showLogin();
+    }
+
+    function setupSpeechRecognition() {
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        $("startSpeechBtn").disabled = true;
+        $("recordStatus").textContent =
+          "Speech recognition is unavailable. Type the transcript manually.";
+        return;
+      }
+
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = $("practiceLanguage").value;
+
+      recognition.onstart = () => {
+        recognizing = true;
+        speechStartTime = Date.now();
+
+        $("startSpeechBtn").disabled = true;
+        $("stopSpeechBtn").disabled = false;
+        $("recordDot").classList.add("active");
+        $("recordStatus").textContent = "Listening... read the sentence.";
+      };
+
+      recognition.onresult = (event) => {
+        let finalText = "";
+        let interimText = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+
+          if (event.results[i].isFinal) {
+            finalText += transcript + " ";
+          } else {
+            interimText += transcript;
+          }
+        }
+
+        const currentText = $("spokenText").value
+          .replace(/\s*\[speaking\]/gi, "")
+          .trim();
+
+        if (finalText) {
+          $("spokenText").value =
+            `${currentText} ${finalText}`.trim();
+        }
+
+        if (interimText) {
+          $("spokenText").value =
+            `${currentText} ${interimText} [speaking]`.trim();
+        }
+      };
+
+      recognition.onerror = (event) => {
+        recognizing = false;
+
+        $("startSpeechBtn").disabled = false;
+        $("stopSpeechBtn").disabled = true;
+        $("recordDot").classList.remove("active");
+        $("recordStatus").textContent = `Speech error: ${event.error}`;
+      };
+
+      recognition.onend = () => {
+        recognizing = false;
+
+        $("startSpeechBtn").disabled = false;
+        $("stopSpeechBtn").disabled = true;
+        $("recordDot").classList.remove("active");
+
+        $("spokenText").value = $("spokenText").value
+          .replace(/\s*\[speaking\]/gi, "")
+          .trim();
+
+        if (!$("recordStatus").textContent.startsWith("Speech error")) {
+          $("recordStatus").textContent = "Microphone is ready.";
+        }
+      };
+    }
+
+    function startSpeech() {
+      if (!recognition) {
+        showMessage(
+          "practiceMessage",
+          "Speech recognition is unavailable. Type your transcript manually.",
+          "error"
+        );
+        return;
+      }
+
+      recognition.lang = $("practiceLanguage").value;
+
+      try {
+        recognition.start();
+      } catch {
+        showMessage(
+          "practiceMessage",
+          "Speech recognition is already running.",
+          "error"
+        );
+      }
+    }
+
+    function stopSpeech() {
+      if (recognition && recognizing) {
+        recognition.stop();
+      }
+    }
+
+    function tokenize(text) {
+      return text
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\s]/gu, " ")
+        .split(/\s+/)
+        .filter(Boolean);
+    }
+
+    function normalizeWords(text) {
+      return tokenize(text).filter((word) => word.length > 0);
+    }
+
+    function uniqueWords(words) {
+      return [...new Set(words)];
+    }
+
+    function countFillerWords(text) {
+      const lower = text.toLowerCase();
+      const details = [];
+
+      FILLER_WORDS.forEach((filler) => {
+        const escaped = filler.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const pattern = new RegExp(
+          `\\b${escaped.replace(/\s+/g, "\\s+")}\\b`,
+          "gi"
+        );
+
+        const matches = lower.match(pattern);
+
+        if (matches) {
+          details.push({
+            word: filler,
+            count: matches.length
+          });
+        }
+      });
+
+      return details;
+    }
+
+    function compareWords(reference, spoken) {
+      const referenceWords = normalizeWords(reference);
+      const spokenWords = normalizeWords(spoken);
+
+      const spokenSet = new Set(spokenWords);
+      const referenceSet = new Set(referenceWords);
+
+      const matched = uniqueWords(
+        referenceWords.filter((word) => spokenSet.has(word))
+      );
+
+      const missing = uniqueWords(
+        referenceWords.filter((word) => !spokenSet.has(word))
+      );
+
+      const extra = uniqueWords(
+        spokenWords.filter((word) => !referenceSet.has(word))
+      );
+
+      const accuracy = referenceWords.length
+        ? Math.round((matched.length / uniqueWords(referenceWords).length) * 100)
+        : 0;
+
+      return {
+        referenceWords,
+        spokenWords,
+        matched,
+        missing,
+        extra,
+        accuracy
+      };
+    }
+
+    function calculateFluency(spokenText, wordCount, elapsedSeconds) {
+      const fillerWords = countFillerWords(spokenText);
+      const fillerCount = fillerWords.reduce(
+        (sum, item) => sum + item.count,
+        0
+      );
+
+      const minutes = Math.max(elapsedSeconds / 60, 1 / 60);
+      const wordsPerMinute = Math.round(wordCount / minutes);
+
+      let speedScore = 80;
+
+      if (wordsPerMinute < 50) speedScore = 65;
+      if (wordsPerMinute >= 50 && wordsPerMinute <= 150) speedScore = 90;
+      if (wordsPerMinute > 150 && wordsPerMinute <= 190) speedScore = 75;
+      if (wordsPerMinute > 190) speedScore = 60;
+
+      const punctuationPauses = (
+        spokenText.match(/[.!?,;:]/g) || []
+      ).length;
+
+      const pauseScore = punctuationPauses > 0 ? 90 : 60;
+      const fillerScore = Math.max(35, 100 - fillerCount * 12);
+
+      const fluency = Math.round(
+        speedScore * 0.45 +
+        pauseScore * 0.25 +
+        fillerScore * 0.3
+      );
+
+      return {
+        fluency: Math.min(98, Math.max(25, fluency)),
+        fillerWords,
+        fillerCount,
+        wordsPerMinute,
+        speedLabel:
+          wordsPerMinute < 50
+            ? "Slow"
+            : wordsPerMinute <= 150
+              ? "Comfortable"
+              : wordsPerMinute <= 190
+                ? "Fast"
+                : "Very fast"
+      };
+    }
+
+    function calculatePronunciation(compareResult, fillerCount) {
+      let score = compareResult.accuracy;
+
+      if (fillerCount > 0) {
+        score -= Math.min(15, fillerCount * 3);
+      }
+
+      return Math.min(98, Math.max(20, score));
+    }
+
+    function getSuggestions(result) {
+      const suggestions = [];
+
+      if (result.accuracy < 70) {
+        suggestions.push(
+          "Read the reference sentence slowly and focus on missing words."
+        );
+      }
+
+      if (result.fluency < 65) {
+        suggestions.push(
+          "Use short pauses between phrases and avoid speaking too quickly."
+        );
+      }
+
+      if (result.fillerCount > 0) {
+        suggestions.push(
+          `Reduce filler words such as ${result.fillerWords
+            .map((item) => item.word)
+            .join(", ")}.`
+        );
+      }
+
+      if (result.wordsPerMinute < 50) {
+        suggestions.push(
+          "Try to connect words more naturally instead of pausing after every word."
+        );
+      }
+
+      if (result.wordsPerMinute > 170) {
+        suggestions.push(
+          "Slow down slightly so each word is easier to understand."
+        );
+      }
+
+      if (!suggestions.length) {
+        suggestions.push(
+          "Good practice result. Repeat the sentence with natural rhythm."
+        );
+      }
+
+      return suggestions;
+    }
+
+    function analyzeSpeech(reference, spoken) {
+      const comparison = compareWords(reference, spoken);
+
+      const elapsedSeconds = speechStartTime
+        ? Math.max((Date.now() - speechStartTime) / 1000, 1)
+        : Math.max(normalizeWords(spoken).length / 2, 1);
+
+      const fluencyResult = calculateFluency(
+        spoken,
+        comparison.spokenWords.length,
+        elapsedSeconds
+      );
+
+      const pronunciation = calculatePronunciation(
+        comparison,
+        fluencyResult.fillerCount
+      );
+
+      const overall = Math.round(
+        comparison.accuracy * 0.4 +
+        fluencyResult.fluency * 0.35 +
+        pronunciation * 0.25
+      );
+
+      const result = {
+        accuracy: comparison.accuracy,
+        fluency: fluencyResult.fluency,
+        pronunciation,
+        overall,
+        matched: comparison.matched,
+        missing: comparison.missing,
+        extra: comparison.extra,
+        fillerWords: fluencyResult.fillerWords,
+        fillerCount: fluencyResult.fillerCount,
+        wordsPerMinute: fluencyResult.wordsPerMinute,
+        speedLabel: fluencyResult.speedLabel,
+        suggestions: []
+      };
+
+      result.suggestions = getSuggestions(result);
+
+      return result;
+    }
+
+    function renderAnalysis(entry) {
+      const fillers = entry.fillerWords.length
+        ? entry.fillerWords
+            .map((item) => `${item.word} (${item.count})`)
+            .join(", ")
+        : "None detected";
+
+      const suggestions = entry.suggestions
+        .map((suggestion) => `<li>${escapeHTML(suggestion)}</li>`)
+        .join("");
+
+      $("analysisResult").innerHTML = `
+        <span class="badge badge-score">
+          Overall score: ${entry.overall}%
+        </span>
+
+        <div class="score-label">
+          <span>Overall performance</span>
+          <strong>${entry.overall}%</strong>
+        </div>
+
+        <div class="score-bar">
+          <div class="score-fill" style="width: ${entry.overall}%"></div>
+        </div>
+
+        <div class="result-grid">
+          <div class="result-item">
+            <small>Word accuracy</small>
+            <strong>${entry.accuracy}%</strong>
+          </div>
+
+          <div class="result-item">
+            <small>Fluency</small>
+            <strong>${entry.fluency}%</strong>
+          </div>
+
+          <div class="result-item">
+            <small>Pronunciation estimate</small>
+            <strong>${entry.pronunciation}%</strong>
+          </div>
+
+          <div class="result-item">
+            <small>Speaking rate</small>
+            <strong>${entry.wordsPerMinute} WPM</strong>
+          </div>
+
+          <div class="result-item">
+            <small>Speed category</small>
+            <strong>${escapeHTML(entry.speedLabel)}</strong>
+          </div>
+
+          <div class="result-item">
+            <small>Filler words</small>
+            <strong>${escapeHTML(fillers)}</strong>
+          </div>
+        </div>
+
+        <div style="margin-top: 18px;">
+          <small style="display:block; color:var(--muted); margin-bottom:8px;">
+            Suggestions
+          </small>
+
+          <ul style="padding-left:20px; line-height:1.7;">
+            ${suggestions}
+          </ul>
+        </div>
+      `;
+
+      $("readTranscriptBtn").disabled = false;
+      $("copyTranscriptBtn").disabled = false;
+    }
+
+    function renderWordComparison(entry) {
+      const matched = entry.matched.length
+        ? entry.matched
+            .map(
+              (word) =>
+                `<span class="badge badge-success">${escapeHTML(word)}</span>`
+            )
+            .join(" ")
+        : "No matched words";
+
+      const missing = entry.missing.length
+        ? entry.missing
+            .map(
+              (word) =>
+                `<span class="badge badge-danger">${escapeHTML(word)}</span>`
+            )
+            .join(" ")
+        : "No missing words";
+
+      const extra = entry.extra.length
+        ? entry.extra
+            .map(
+              (word) =>
+                `<span class="badge badge-warning">${escapeHTML(word)}</span>`
+            )
+            .join(" ")
+        : "No extra words";
+
+      $("wordComparison").innerHTML = `
+        <div>
+          <small style="display:block; color:var(--muted); margin-bottom:8px;">
+            Matched words
+          </small>
+          ${matched}
+        </div>
+
+        <div style="margin-top:17px;">
+          <small style="display:block; color:var(--muted); margin-bottom:8px;">
+            Missing words
+          </small>
+          ${missing}
+        </div>
+
+        <div style="margin-top:17px;">
+          <small style="display:block; color:var(--muted); margin-bottom:8px;">
+            Extra words
+          </small>
+          ${extra}
+        </div>
+      `;
+    }
+
+    function renderPracticeWords(entry) {
+      const words = uniqueWords([
+        ...entry.missing,
+        ...entry.extra
+      ]).slice(0, 12);
+
+      if (!words.length) {
+        $("practiceWords").innerHTML =
+          `<div class="empty-state">No additional practice words found.</div>`;
+        return;
+      }
+
+      $("practiceWords").innerHTML = words
+        .map((word) => {
+          const tip =
+            PRONUNCIATION_TIPS[word] ||
+            "Repeat the word slowly, stress the main syllable, and compare your voice with the reference.";
+
+          return `
+            <div class="practice-word">
+              <strong>${escapeHTML(word)}</strong>
+              <small>${escapeHTML(tip)}</small>
+              <div style="margin-top:10px;">
+                <button
+                  class="btn btn-secondary speak-word"
+                  data-word="${escapeHTML(word)}"
+                >
+                  🔊 Hear
+                </button>
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+
+      document.querySelectorAll(".speak-word").forEach((button) => {
+        button.addEventListener("click", () => {
+          speakText(button.dataset.word);
+        });
+      });
+    }
+
+    function analyzeAndSave() {
+      const reference = $("referenceText").value.trim();
+      const spoken = $("spokenText").value
+        .replace(/\s*\[speaking\]/gi, "")
+        .trim();
+
+      if (!reference) {
+        showMessage(
+          "practiceMessage",
+          "Please enter a reference sentence.",
+          "error"
+        );
+        return;
+      }
+
+      if (!spoken) {
+        showMessage(
+          "practiceMessage",
+          "Please speak or type a transcript.",
+          "error"
+        );
+        return;
+      }
+
+      if (reference.length < 10) {
+        showMessage(
+          "practiceMessage",
+          "Please enter a longer reference sentence.",
+          "error"
+        );
+        return;
+      }
+
+      const result = analyzeSpeech(reference, spoken);
+
+      currentAnalysis = {
+        id: Date.now(),
+        reference,
+        spoken,
+        ...result,
+        createdAt: new Date().toISOString(),
+        userEmail: currentUser.email
+      };
+
+      const history = getHistory();
+      history.unshift(currentAnalysis);
+      setHistory(history);
+
+      renderAnalysis(currentAnalysis);
+      renderWordComparison(currentAnalysis);
+      renderPracticeWords(currentAnalysis);
+      updateDashboard();
+      renderHistory();
+
+      showMessage(
+        "practiceMessage",
+        "Speech analysis completed and saved successfully.",
+        "success"
+      );
+    }
+
+    function updateDashboard() {
+      const history = getHistory().filter(
+        (item) => item.userEmail === currentUser?.email
+      );
+
+      const total = history.length;
+
+      const average = (field) =>
+        total
+          ? Math.round(
+              history.reduce((sum, item) => sum + item[field], 0) / total
+            )
+          : 0;
+
+      const accuracy = average("accuracy");
+      const fluency = average("fluency");
+      const pronunciation = average("pronunciation");
+
+      const words = history.reduce(
+        (sum, item) => sum + item.spoken.split(/\s+/).filter(Boolean).length,
+        0
+      );
+
+      $("sessionCount").textContent = total;
+      $("averageAccuracy").textContent = `${accuracy}%`;
+      $("averageFluency").textContent = `${fluency}%`;
+      $("wordsPracticed").textContent = words;
+
+      $("dashboardAccuracyText").textContent = `${accuracy}%`;
+      $("dashboardAccuracyBar").style.width = `${accuracy}%`;
+
+      $("dashboardFluencyText").textContent = `${fluency}%`;
+      $("dashboardFluencyBar").style.width = `${fluency}%`;
+
+      $("dashboardPronunciationText").textContent = `${pronunciation}%`;
+      $("dashboardPronunciationBar").style.width = `${pronunciation}%`;
+
+      if (history.length) {
+        renderLatestPractice(history[0]);
+      } else {
+        $("latestPractice").innerHTML =
+          `<div class="empty-state">No practice session found.</div>`;
+      }
+    }
+
+    function renderLatestPractice(entry) {
+      $("latestPractice").innerHTML = `
+        <span class="badge badge-score">
+          Overall: ${entry.overall}%
+        </span>
+
+        <p style="margin:14px 0; line-height:1.6;">
+          ${escapeHTML(entry.reference)}
+        </p>
+
+        <div class="history-meta">
+          <span>Accuracy: ${entry.accuracy}%</span>
+          <span>Fluency: ${entry.fluency}%</span>
+          <span>${formatDate(entry.createdAt)}</span>
+        </div>
+      `;
+    }
+
+    function renderHistory() {
+      const list = $("historyList");
+
+      const history = getHistory().filter(
+        (item) => item.userEmail === currentUser?.email
+      );
+
+      if (!history.length) {
+        list.innerHTML =
+          `<div class="empty-state">No practice history found.</div>`;
+        return;
+      }
+
+      list.innerHTML = history
+        .map(
+          (item) => `
+            <article class="history-item">
+              <div class="history-head">
+                <div class="history-title">
+                  Score: ${item.overall}%
+                </div>
+
+                <button
+                  class="btn btn-danger delete-session"
+                  data-id="${item.id}"
+                >
+                  Delete
+                </button>
+              </div>
+
+              <p style="margin-bottom:8px;">
+                <strong>Reference:</strong>
+                ${escapeHTML(item.reference)}
+              </p>
+
+              <div class="history-text">
+                <strong>Spoken transcript:</strong><br />
+                ${escapeHTML(item.spoken)}
+              </div>
+
+              <div class="history-meta">
+                <span>Accuracy: ${item.accuracy}%</span>
+                <span>Fluency: ${item.fluency}%</span>
+                <span>Pronunciation: ${item.pronunciation}%</span>
+                <span>Rate: ${item.wordsPerMinute} WPM</span>
+                <span>${formatDate(item.createdAt)}</span>
+              </div>
+            </article>
+          `
+        )
+        .join("");
+
+      document.querySelectorAll(".delete-session").forEach((button) => {
+        button.addEventListener("click", () => {
+          deleteSession(Number(button.dataset.id));
+        });
+      });
+    }
+
+    function deleteSession(id) {
+      const remaining = getHistory().filter((item) => item.id !== id);
+      setHistory(remaining);
+
+      if (currentAnalysis && currentAnalysis.id === id) {
+        currentAnalysis = null;
+      }
+
+      updateDashboard();
+      renderHistory();
+    }
+
+    function clearHistory() {
+      const history = getHistory().filter(
+        (item) => item.userEmail === currentUser.email
+      );
+
+      if (!history.length) return;
+
+      if (!confirm("Delete all practice history?")) return;
+
+      const remaining = getHistory().filter(
+        (item) => item.userEmail !== currentUser.email
+      );
+
+      setHistory(remaining);
+      currentAnalysis = null;
+      updateDashboard();
+      renderHistory();
+    }
+
+    function exportCSV() {
+      const history = getHistory().filter(
+        (item) => item.userEmail === currentUser.email
+      );
+
+      if (!history.length) {
+        alert("There is no practice history to export.");
+        return;
+      }
+
+      const headers = [
+        "Date",
+        "Reference",
+        "Spoken Transcript",
+        "Overall",
+        "Accuracy",
+        "Fluency",
+        "Pronunciation",
+        "Words Per Minute",
+        "Filler Count",
+        "Missing Words"
+      ];
+
+      const rows = history.map((item) => [
+        formatDate(item.createdAt),
+        item.reference,
+        item.spoken,
+        `${item.overall}%`,
+        `${item.accuracy}%`,
+        `${item.fluency}%`,
+        `${item.pronunciation}%`,
+        item.wordsPerMinute,
+        item.fillerCount,
+        item.missing.join(" ")
+      ]);
+
+      const csv = [headers, ...rows]
+        .map((row) =>
+          row
+            .map((value) => `"${String(value).replace(/"/g, '""')}"`)
+            .join(",")
+        )
+        .join("\n");
+
+      const blob = new Blob([csv], {
+        type: "text/csv;charset=utf-8;"
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "pronunciation-fluency-history.csv";
+      link.click();
+
+      URL.revokeObjectURL(url);
+    }
+
+    function speakText(text) {
+      if (!("speechSynthesis" in window)) {
+        alert("Text-to-speech is not supported in this browser.");
+        return;
+      }
+
+      speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = $("practiceLanguage").value;
+      utterance.rate = 0.85;
+
+      speechSynthesis.speak(utterance);
+    }
+
+    function loadProfile() {
+      $("profileName").value = currentUser.name;
+      $("profileEmail").value = currentUser.email;
+    }
+
+    function saveProfile() {
+      const name = $("profileName").value.trim();
+
+      if (!name) {
+        showMessage("profileMessage", "Name cannot be empty.", "error");
+        return;
+      }
+
+      const user = getUser();
+      user.name = name;
+      writeJSON(KEYS.user, user);
+
+      currentUser = user;
+
+      $("userBadge").textContent =
+        `${currentUser.name} • ${currentUser.email}`;
+
+      showMessage(
+        "profileMessage",
+        "Profile updated successfully.",
+        "success"
+      );
+    }
+
+    function changePassword(event) {
+      event.preventDefault();
+
+      const currentPassword = $("currentPassword").value;
+      const newPassword = $("newPassword").value;
+      const confirmPassword = $("confirmPassword").value;
+      const user = getUser();
+
+      if (currentPassword !== user.password) {
+        showMessage(
+          "passwordMessage",
+          "Current password is incorrect.",
+          "error"
+        );
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        showMessage(
+          "passwordMessage",
+          "New password must have at least six characters.",
+          "error"
+        );
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        showMessage(
+          "passwordMessage",
+          "New passwords do not match.",
+          "error"
+        );
+        return;
+      }
+
+      user.password = newPassword;
+      writeJSON(KEYS.user, user);
+      $("passwordForm").reset();
+
+      showMessage(
+        "passwordMessage",
+        "Password changed successfully.",
+        "success"
+      );
+    }
+
+    function showSection(sectionId) {
+      document.querySelectorAll(".app-section").forEach((section) => {
+        section.classList.toggle(
+          "hidden",
+          section.id !== sectionId
+        );
+      });
+
+      document.querySelectorAll(".nav-btn").forEach((button) => {
+        button.classList.toggle(
+          "active",
+          button.dataset.section === sectionId
+        );
+      });
+
+      if (sectionId === "dashboardSection") {
+        updateDashboard();
+      }
+
+      if (sectionId === "historySection") {
+        renderHistory();
+      }
+    }
+
+    function setupEvents() {
+      $("loginForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const email = $("loginEmail").value;
+        const password = $("loginPassword").value;
+
+        if (login(email, password)) {
+          clearMessage("loginMessage");
+        } else {
+          showMessage(
+            "loginMessage",
+            "Invalid email or password.",
+            "error"
+          );
+        }
+      });
+
+      $("logoutBtn").addEventListener("click", logout);
+      $("themeBtn").addEventListener("click", toggleTheme);
+
+      document.querySelectorAll(".nav-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+          showSection(button.dataset.section);
+        });
+      });
+
+      $("newPracticeBtn").addEventListener("click", () => {
+        showSection("practiceSection");
+        $("referenceText").focus();
+      });
+
+      $("practiceLanguage").addEventListener("change", () => {
+        if (recognition) {
+          recognition.lang = $("practiceLanguage").value;
+        }
+      });
+
+      $("startSpeechBtn").addEventListener("click", startSpeech);
+      $("stopSpeechBtn").addEventListener("click", stopSpeech);
+      $("analyzeBtn").addEventListener("click", analyzeAndSave);
+
+      $("speakReferenceBtn").addEventListener("click", () => {
+        const text = $("referenceText").value.trim();
+
+        if (!text) {
+          showMessage(
+            "practiceMessage",
+            "Enter a reference sentence first.",
+            "error"
+          );
+          return;
+        }
+
+        speakText(text);
+      });
+
+      $("readTranscriptBtn").addEventListener("click", () => {
+        if (currentAnalysis) {
+          speakText(currentAnalysis.spoken);
+        }
+      });
+
+      $("copyTranscriptBtn").addEventListener("click", () => {
+        if (!currentAnalysis) return;
+
+        navigator.clipboard
+          .writeText(currentAnalysis.spoken)
+          .then(() => {
+            showMessage(
+              "practiceMessage",
+              "Transcript copied successfully.",
+              "success"
+            );
+          })
+          .catch(() => {
+            showMessage(
+              "practiceMessage",
+              "Unable to copy transcript.",
+              "error"
+            );
+          });
+      });
+
+      $("sampleBtn").addEventListener("click", () => {
+        $("referenceText").value =
+          "Natural language processing helps computers understand human language.";
+
+        $("spokenText").value =
+          "Natural language processing helps computers understand human language.";
+      });
+
+      $("clearBtn").addEventListener("click", () => {
+        $("referenceText").value = "";
+        $("spokenText").value = "";
+        currentAnalysis = null;
+
+        $("analysisResult").innerHTML =
+          `<div class="empty-state">Accuracy, fluency, filler words, and pronunciation practice words will appear here.</div>`;
+
+        $("wordComparison").innerHTML =
+          `<div class="empty-state">Word comparison will appear here.</div>`;
+
+        $("practiceWords").innerHTML =
+          `<div class="empty-state">Practice words will appear here.</div>`;
+
+        $("readTranscriptBtn").disabled = true;
+        $("copyTranscriptBtn").disabled = true;
+
+        clearMessage("practiceMessage");
+      });
+
+      $("clearHistoryBtn").addEventListener("click", clearHistory);
+      $("exportBtn").addEventListener("click", exportCSV);
+
+      $("saveProfileBtn").addEventListener("click", saveProfile);
+      $("passwordForm").addEventListener("submit", changePassword);
+    }
+
+    function initialize() {
+      getUser();
+      setupEvents();
+      setupSpeechRecognition();
+      applyTheme();
+
+      const savedSession = localStorage.getItem(KEYS.session);
+      const savedUser = getUser();
+
+      if (savedSession === savedUser.email) {
+        currentUser = savedUser;
+        showApp();
+      } else {
+        showLogin();
+      }
+    }
+
+    initialize();
+  </script>
+</body>
+</html>
